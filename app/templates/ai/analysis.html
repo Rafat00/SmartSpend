@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}AI Spending Analysis{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">AI Assistant</h1>
+{% include 'ai/_tabs.html' %}
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card h-100"><div class="card-header bg-white fw-semibold">Data sent to the AI</div>
+      <div class="card-body">
+        <p class="small text-muted">Only these summary totals are sent — never your name, email or password.</p>
+        <div class="d-flex justify-content-between"><span>{{ summary.current_month.label }}</span><strong>{{ summary.current_month.total|money }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span>{{ summary.previous_month.label }}</span><strong>{{ summary.previous_month.total|money }}</strong></div>
+        <hr>
+        {% for cat, amount in summary.category_current_month.items() %}
+          <div class="d-flex justify-content-between"><span><span class="badge" style="background:{{ cat|cat_color }}">&nbsp;</span> {{ cat }}</span><span>{{ amount|money }}</span></div>
+        {% else %}<div class="text-muted">No spending this month yet.</div>{% endfor %}
+        <form method="post" class="mt-4">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-primary w-100"><i class="bi bi-stars me-1"></i>Analyze my spending</button>
+        </form>
+      </div></div>
+  </div>
+
+  <div class="col-lg-8">
+    {% if result %}
+      {% if result.notice %}<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>{{ result.notice }}</div>{% endif %}
+      {% set a = result.analysis %}
+      <div class="card mb-3"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h2 class="h5 mb-0">Your spending insights</h2>
+          <span class="badge {{ 'bg-primary' if result.source == 'ai' else 'bg-secondary' }}">{{ 'AI-generated' if result.source == 'ai' else 'Rule-based' }}</span>
+        </div>
+        {% if a.highest_category %}<h3 class="h6 mt-3"><i class="bi bi-trophy me-1"></i>Highest spending category</h3><p>{{ a.highest_category }}</p>{% endif %}
+        {% if a.month_comparison %}<h3 class="h6"><i class="bi bi-arrow-left-right me-1"></i>Comparison with previous months</h3><p>{{ a.month_comparison }}</p>{% endif %}
+        {% if a.rapidly_increasing %}<h3 class="h6"><i class="bi bi-graph-up-arrow me-1"></i>Categories increasing quickly</h3><ul>{% for i in a.rapidly_increasing %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}
+        {% if a.possible_unnecessary %}<h3 class="h6"><i class="bi bi-exclamation-diamond me-1"></i>Possible unnecessary spending</h3><ul>{% for i in a.possible_unnecessary %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}
+        {% if a.saving_suggestions %}<h3 class="h6"><i class="bi bi-piggy-bank me-1"></i>Ways to save</h3><ul class="mb-0">{% for i in a.saving_suggestions %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}
+      </div></div>
+    {% else %}
+      <div class="card"><div class="card-body text-center text-muted py-5">
+        <i class="bi bi-lightbulb fs-1"></i>
+        <p class="mt-2 mb-0">Click <strong>Analyze my spending</strong> to get insights about your expenses.</p>
+      </div></div>
+    {% endif %}
+    <div class="alert alert-light border small mt-3 mb-0"><i class="bi bi-shield-exclamation me-1"></i>{{ disclaimer }}</div>
+  </div>
+</div>
+{% endblock %}

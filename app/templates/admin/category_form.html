@@ -1,0 +1,18 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ 'New' if mode == 'new' else 'Edit' }} category{% endblock %}
+{% block content %}
+<a class="small text-decoration-none" href="{{ url_for('admin.categories') }}"><i class="bi bi-arrow-left"></i> Back to categories</a>
+<h1 class="h3 my-3">{{ 'New category' if mode == 'new' else 'Edit category' }}</h1>
+<div class="card" style="max-width:560px"><div class="card-body">
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="mb-3"><label class="form-label" for="name">Name</label>
+      <input class="form-control" id="name" name="name" value="{{ values.name }}" maxlength="50" required {{ 'readonly' if locked }}>
+      {% if locked %}<div class="form-text">The fallback category cannot be renamed.</div>
+      {% elif mode == 'edit' %}<div class="form-text">Renaming also updates every existing expense that uses this category.</div>{% endif %}</div>
+    <div class="mb-3"><label class="form-label" for="color">Colour</label>
+      <input class="form-control form-control-color" type="color" id="color" name="color" value="{{ values.color }}"></div>
+    <button class="btn btn-primary">Save</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin.categories') }}">Cancel</a>
+  </form></div></div>
+{% endblock %}

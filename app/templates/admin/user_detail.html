@@ -1,0 +1,46 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ u.name }}{% endblock %}
+{% block content %}
+<a class="small text-decoration-none" href="{{ url_for('admin.users') }}"><i class="bi bi-arrow-left"></i> Back to users</a>
+<h1 class="h3 my-3">{{ u.name }}
+  <span class="badge {{ 'text-bg-warning' if u.is_admin else 'text-bg-light border' }} fs-6 align-middle">{{ u.role }}</span>
+  <span class="badge {{ 'text-bg-success' if u.is_active else 'text-bg-danger' }} fs-6 align-middle">{{ 'Active' if u.is_active else 'Inactive' }}</span></h1>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Account details</div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Email</span><span>{{ u.email }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span class="text-muted">User ID</span><span>#{{ u.id }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Joined</span><span>{{ u.created_at.strftime('%d %b %Y %H:%M') }} UTC</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Last login</span><span>{{ u.last_login_at.strftime('%d %b %Y %H:%M') ~ ' UTC' if u.last_login_at else 'Never' }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Expenses recorded</span><span>{{ expense_count }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Last expense added</span><span>{{ last_expense.strftime('%d %b %Y') if last_expense else '—' }}</span></li>
+    </ul>
+    <div class="card-footer bg-white small text-muted"><i class="bi bi-shield-lock me-1"></i>Passwords and individual expense details are never shown to administrators.</div>
+  </div></div>
+  <div class="col-lg-6">
+    {% if is_self %}
+      <div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>This is your own account. You cannot deactivate it or change your own role.</div>
+    {% else %}
+    <div class="card mb-3"><div class="card-header bg-white fw-semibold">Account status</div><div class="card-body">
+      <form method="post" action="{{ url_for('admin.set_user_status', user_id=u.id) }}" onsubmit="return confirm('Are you sure?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="active" value="{{ '0' if u.is_active else '1' }}">
+        <p class="small text-muted">{{ 'Deactivated users cannot log in and are signed out immediately. Their data is kept.' if u.is_active else 'Activating lets this user log in again.' }}</p>
+        <button class="btn {{ 'btn-danger' if u.is_active else 'btn-success' }}">{{ 'Deactivate account' if u.is_active else 'Activate account' }}</button>
+      </form></div></div>
+    <div class="card"><div class="card-header bg-white fw-semibold">Role</div><div class="card-body">
+      <form method="post" action="{{ url_for('admin.set_user_role', user_id=u.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-2">
+          <div class="col-sm-5"><label class="form-label small">Role</label><select class="form-select" name="role">
+            <option value="user" {{ 'selected' if not u.is_admin }}>User</option>
+            <option value="admin" {{ 'selected' if u.is_admin }}>Admin</option></select></div>
+          <div class="col-sm-7"><label class="form-label small">Confirm with YOUR password</label>
+            <input class="form-control" type="password" name="admin_password" autocomplete="current-password" required></div>
+        </div>
+        <button class="btn btn-primary mt-3">Change role</button>
+      </form></div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

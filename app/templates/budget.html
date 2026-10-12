@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Budget{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Monthly Budget</h1>
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card h-100"><div class="card-header bg-white fw-semibold">Set a budget</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-2 mb-3">
+            <div class="col-7"><label class="form-label" for="month">Month</label>
+              <select class="form-select" id="month" name="month">
+                {% for name in month_names %}<option value="{{ loop.index }}" {{ 'selected' if loop.index == month }}>{{ name }}</option>{% endfor %}
+              </select></div>
+            <div class="col-5"><label class="form-label" for="year">Year</label>
+              <input class="form-control" type="number" id="year" name="year" min="2000" max="2100" value="{{ year }}"></div>
+          </div>
+          <div class="mb-3"><label class="form-label" for="amount">Budget amount (৳)</label>
+            <input class="form-control" id="amount" name="amount" inputmode="decimal" required placeholder="30000"
+                   value="{{ '%.2f'|format(status.budget) if status.has_budget else '' }}"></div>
+          <button class="btn btn-primary w-100">Save budget</button>
+        </form>
+      </div></div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100"><div class="card-header bg-white fw-semibold">{{ month_names[month - 1] }} {{ year }}</div>
+      <div class="card-body">
+        {% if status.has_budget %}
+          {% if status.exceeded %}
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>⚠️ You have exceeded your monthly budget by {{ status.over_by|money }}.</div>
+          {% elif status.percent >= 80 %}
+            <div class="alert alert-warning">You have used {{ status.percent }}% of your budget — be careful.</div>
+          {% endif %}
+          <div class="row text-center mb-3">
+            <div class="col"><div class="text-muted small">Budget</div><div class="fs-4 fw-bold">{{ status.budget|money }}</div></div>
+            <div class="col"><div class="text-muted small">Spent</div><div class="fs-4 fw-bold">{{ status.spent|money }}</div></div>
+            <div class="col"><div class="text-muted small">Remaining</div>
+              <div class="fs-4 fw-bold {{ 'text-danger' if status.exceeded else 'text-success' }}">{{ status.remaining|money }}</div></div>
+          </div>
+          <div class="progress" style="height:22px">
+            <div class="progress-bar {{ 'bg-danger' if status.exceeded else ('bg-warning' if status.percent >= 80 else 'bg-success') }}"
+                 style="width: {{ [status.percent, 100]|min }}%">{{ status.percent }}%</div>
+          </div>
+        {% else %}
+          <p class="text-muted mb-1">No budget set for this month.</p>
+          <p class="mb-0">Spent so far: <strong>{{ status.spent|money }}</strong></p>
+        {% endif %}
+      </div></div>
+  </div>
+
+  <div class="col-12">
+    <div class="card"><div class="card-header bg-white fw-semibold">Budget history</div>
+      <div class="table-responsive"><table class="table align-middle mb-0">
+        <thead class="table-light"><tr><th>Month</th><th class="text-end">Budget</th><th class="text-end">Spent</th><th class="text-end">Remaining</th><th style="min-width:160px">Progress</th><th></th></tr></thead>
+        <tbody>
+        {% for h in history %}
+          <tr>
+            <td><a href="{{ url_for('budget.manage', year=h.year, month=h.month) }}">{{ month_names[h.month - 1] }} {{ h.year }}</a></td>
+            <td class="text-end">{{ h.budget|money }}</td><td class="text-end">{{ h.spent|money }}</td>
+            <td class="text-end {{ 'text-danger' if h.exceeded else 'text-success' }}">{{ h.remaining|money }}</td>
+            <td><div class="progress"><div class="progress-bar {{ 'bg-danger' if h.exceeded else 'bg-success' }}" style="width: {{ [h.percent, 100]|min }}%"></div></div></td>
+            <td class="text-end"><form method="post" action="{{ url_for('budget.delete', budget_id=h.id) }}" onsubmit="return confirm('Remove this budget?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form></td>
+          </tr>
+        {% else %}<tr><td colspan="6" class="text-center text-muted py-4">No budgets yet.</td></tr>{% endfor %}
+        </tbody></table></div></div>
+  </div>
+</div>
+{% endblock %}

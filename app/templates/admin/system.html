@@ -1,0 +1,50 @@
+{% extends 'admin/base.html' %}
+{% block title %}System Monitoring{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">System monitoring</h1>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Database</div><div class="card-body">
+    {% if db_health.ok %}<span class="badge text-bg-success">Connected</span>
+      <ul class="list-unstyled small mt-3 mb-0"><li>Engine: {{ db_health.engine }}</li><li>Query latency: {{ db_health.latency_ms }} ms</li>
+      {% if db_health.size %}<li>Database size: {{ db_health.size }}</li>{% endif %}</ul>
+    {% else %}<span class="badge text-bg-danger">Unreachable</span><p class="small text-muted mt-2 mb-0">Check that PostgreSQL is running. Connection details are intentionally not shown here.</p>{% endif %}
+  </div></div></div>
+
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">AI service</div><div class="card-body">
+    {% set colors = {'ok': 'success', 'degraded': 'warning', 'unconfigured': 'secondary'} %}
+    <span class="badge text-bg-{{ colors[ai.state] }}">{{ ai.label }}</span>
+    <ul class="list-unstyled small mt-3">
+      {% if ai.model %}<li>Model: {{ ai.model }}</li><li>Provider host: {{ ai.provider_host }}</li>{% endif %}
+      <li>API key: {{ 'set (hidden)' if ai.state != 'unconfigured' else 'not set' }}</li>
+      <li>Successful requests since restart: {{ ai.ai_success }}</li>
+      <li>Failed requests since restart: {{ ai.ai_failure }}</li>
+      <li>Last success: {{ ai.ai_last_success.strftime('%d %b %H:%M UTC') if ai.ai_last_success else '—' }}</li>
+      <li>Last failure: {{ ai.ai_last_failure.strftime('%d %b %H:%M UTC') if ai.ai_last_failure else '—' }}</li>
+    </ul>
+    {% if ai.recent_ai_errors %}<div class="small fw-semibold">Recent errors</div>
+      <ul class="small text-muted ps-3">{% for when, msg in ai.recent_ai_errors[:5] %}<li>{{ when.strftime('%H:%M:%S') }} – {{ msg }}</li>{% endfor %}</ul>{% endif %}
+    <form method="post" action="{{ url_for('admin.test_ai') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-outline-primary"><i class="bi bi-lightning-charge me-1"></i>Test AI connection</button></form>
+    <div class="form-text">When the AI is down, users automatically get rule-based answers.</div>
+  </div></div></div>
+
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Application statistics</div>
+    <ul class="list-group list-group-flush small">
+      <li class="list-group-item d-flex justify-content-between"><span>Users (active / total)</span><span>{{ counts.active_users }} / {{ counts.total_users }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Administrators</span><span>{{ counts.admins }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Expenses recorded</span><span>{{ counts.total_expenses }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Budgets set</span><span>{{ counts.total_budgets }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Categories (active / total)</span><span>{{ counts.active_categories }} / {{ counts.total_categories }}</span></li>
+    </ul></div></div>
+
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Runtime</div>
+    <ul class="list-group list-group-flush small">
+      <li class="list-group-item d-flex justify-content-between"><span>Python / Flask</span><span>{{ runtime.python }} / {{ runtime.flask }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Uptime (this process)</span><span>{{ runtime.uptime }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Debug mode</span><span>{% if runtime.debug %}<span class="badge text-bg-warning">ON – turn off in production</span>{% else %}off{% endif %}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Server errors (500) since restart</span><span>{{ runtime.server_errors }}</span></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Last server error</span><span>{{ runtime.last_server_error.strftime('%d %b %H:%M UTC') if runtime.last_server_error else '—' }}</span></li>
+    </ul></div></div>
+</div>
+<p class="small text-muted mt-3"><i class="bi bi-shield-lock me-1"></i>API keys, passwords, stack traces and request logs are never displayed on this page. Counters reset when the server restarts.</p>
+{% endblock %}

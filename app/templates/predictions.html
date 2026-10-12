@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Predictions{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Predictions &amp; Unusual Expenses</h1>
+
+{% if prediction.status == 'ok' %}
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label">Estimated spending next month ({{ prediction.next_month.label }})</div>
+    <div class="stat-value text-primary">{{ prediction.next_month.estimate|money }}</div>
+    <span class="badge bg-warning text-dark">Estimate</span></div></div></div>
+  <div class="col-md-4"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label">Estimated full total for {{ prediction.this_month.label }}</div>
+    <div class="stat-value">{{ prediction.this_month.estimate|money }}</div>
+    <span class="badge bg-warning text-dark">Estimate</span></div></div></div>
+  <div class="col-md-4"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label">Simple baseline (3-month average)</div>
+    <div class="stat-value">{{ prediction.baseline_3_month_avg|money }}</div>
+    <div class="small text-muted">Typical model error on past data: ±{{ prediction.typical_error|money }}</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-7"><div class="card h-100"><div class="card-header bg-white fw-semibold">Monthly spending: actual vs estimate</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartPrediction"></canvas></div></div></div></div>
+  <div class="col-lg-5"><div class="card h-100"><div class="card-header bg-white fw-semibold">Estimated by category (next month)</div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead class="table-light"><tr><th>Category</th><th class="text-end">Last month</th><th class="text-end">Estimate</th></tr></thead>
+      <tbody>{% for c in prediction.categories %}
+        <tr><td><span class="badge" style="background:{{ c.category|cat_color }}">{{ c.category }}</span> <span class="small text-muted">{{ c.method }}</span></td>
+        <td class="text-end">{{ c.last_month|money }}</td><td class="text-end fw-semibold">{{ c.estimate|money }}</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-body small">
+  <div><strong>Model:</strong> {{ prediction.model }}</div>
+  <div><strong>Trained on:</strong> {{ prediction.months_used }} completed months, {{ prediction.transactions_used }} expenses.</div>
+  {% if prediction.next_7_days %}<div><strong>Next 7 days:</strong> about {{ prediction.next_7_days.estimate|money }} (average of {{ prediction.next_7_days.daily_average|money }}/day over the last 28 days).</div>{% endif %}
+</div></div>
+{% else %}
+<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><strong>{{ prediction.message }}</strong><br><span class="small">{{ prediction.detail }}</span></div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-header bg-white fw-semibold"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Unusual expenses detected</div>
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead class="table-light"><tr><th>Date</th><th>Category</th><th>Store</th><th class="text-end">Amount</th><th>Usually</th><th></th></tr></thead>
+    <tbody>
+    {% for u in unusual %}
+      <tr><td>{{ u.date }}</td><td><span class="badge" style="background:{{ u.category|cat_color }}">{{ u.category }}</span></td><td>{{ u.store or '—' }}</td>
+        <td class="text-end fw-semibold text-danger">{{ u.amount|money }}</td>
+        <td class="small text-muted">{{ u.usual_low|money }} – {{ u.usual_high|money }} ({{ u.scope }})</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('expenses.edit_expense', expense_id=u.id) }}">Review</a></td></tr>
+    {% else %}
+      <tr><td colspan="6" class="text-center text-muted py-4">No unusual expenses found (or not enough data yet — at least 10 expenses are needed).</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+</div>
+
+<div class="alert alert-light border small mb-0"><i class="bi bi-shield-exclamation me-1"></i>{{ disclaimer }}</div>
+
+{% if chart %}<script type="application/json" id="predictionData">{{ chart|tojson }}</script>{% endif %}
+{% endblock %}
+{% block scripts %}{% if chart %}<script src="{{ url_for('static', filename='js/predictions.js') }}"></script>{% endif %}{% endblock %}

@@ -1,0 +1,4 @@
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'ai.chat' }}" href="{{ url_for('ai.chat') }}"><i class="bi bi-chat-dots me-1"></i>Chatbot</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'ai.analysis' }}" href="{{ url_for('ai.analysis') }}"><i class="bi bi-lightbulb me-1"></i>Spending Analysis</a></li>
+</ul>

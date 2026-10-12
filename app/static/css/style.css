@@ -1,0 +1,49 @@
+:root {
+  --ss-sidebar-w: 250px;
+  --ss-primary: #4f46e5;
+  --ss-dark: #111827;
+}
+
+body { background: #f3f4f6; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+/* ---------- layout ---------- */
+.app-shell { display: flex; min-height: 100vh; }
+.sidebar { background: linear-gradient(180deg, #111827 0%, #1f2937 100%); color: #fff; width: var(--ss-sidebar-w); flex-shrink: 0; }
+aside.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sidebar .brand { color: #fff; text-decoration: none; }
+.sidebar .nav-link { color: rgba(255,255,255,.75); border-radius: .6rem; padding: .6rem .9rem; }
+.sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+.sidebar .nav-link.active { color: #fff; background: var(--ss-primary); }
+.main-area { flex: 1; min-width: 0; }
+.topbar { background: #fff; position: sticky; top: 0; z-index: 1020; }
+
+/* ---------- cards ---------- */
+.card { border: 0; border-radius: .9rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.card-header { border-bottom: 1px solid #eef0f3; border-radius: .9rem .9rem 0 0 !important; }
+.stat-card .stat-label { color: #6b7280; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+.stat-card .stat-value { font-size: 1.55rem; font-weight: 700; color: var(--ss-dark); line-height: 1.3; }
+.stat-card.border-danger { border: 1px solid #dc3545 !important; }
+
+.chart-box { position: relative; height: 280px; }
+.chart-empty { height: 100%; display: flex; align-items: center; justify-content: center; color: #9ca3af; }
+
+/* ---------- auth ---------- */
+.auth-wrap { min-height: 100vh; background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); }
+.auth-card { max-width: 440px; }
+
+/* ---------- chat ---------- */
+.chat-card { max-width: 900px; }
+.chat-messages { height: 55vh; min-height: 320px; overflow-y: auto; padding: 1rem; background: #f9fafb; display: flex; flex-direction: column; gap: .6rem; }
+.msg { max-width: 82%; padding: .6rem .9rem; border-radius: 1rem; white-space: pre-wrap; word-wrap: break-word; }
+.msg-user { align-self: flex-end; background: var(--ss-primary); color: #fff; border-bottom-right-radius: .2rem; }
+.msg-bot { align-self: flex-start; background: #fff; border: 1px solid #e5e7eb; border-bottom-left-radius: .2rem; }
+.msg-note { align-self: flex-start; font-size: .75rem; color: #6b7280; margin-top: -.3rem; }
+
+@media (max-width: 575.98px) {
+  .stat-card .stat-value { font-size: 1.25rem; }
+  .msg { max-width: 94%; }
+}
+
+/* ---------- admin area ---------- */
+.sidebar-admin { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%); }
+.sidebar-admin .nav-link.active { background: #f59e0b; color: #1e1b4b; font-weight: 600; }

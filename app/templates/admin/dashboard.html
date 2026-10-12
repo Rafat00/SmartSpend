@@ -1,0 +1,44 @@
+{% extends 'admin/base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Admin Dashboard</h1>
+<div class="row g-3 mb-3">
+  {% macro stat(label, value, icon, sub='') %}
+  <div class="col-6 col-xl"><div class="card stat-card h-100"><div class="card-body">
+    <div class="d-flex justify-content-between"><div class="stat-label">{{ label }}</div><i class="bi {{ icon }} text-primary"></i></div>
+    <div class="stat-value">{{ value }}</div><div class="small text-muted">{{ sub }}</div>
+  </div></div></div>
+  {% endmacro %}
+  {{ stat('Registered users', counts.total_users, 'bi-people', counts.new_users_30d ~ ' new in 30 days') }}
+  {{ stat('Active users', counts.active_users, 'bi-person-check', counts.admins ~ ' admin(s)') }}
+  {{ stat('Inactive users', counts.inactive_users, 'bi-person-x', 'deactivated accounts') }}
+  {{ stat('Expenses recorded', counts.total_expenses, 'bi-receipt', counts.expenses_30d ~ ' in last 30 days') }}
+  {{ stat('Categories', counts.active_categories, 'bi-tags', counts.total_categories ~ ' in total') }}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Expense records per month</div>
+    <div class="card-body"><div class="chart-box"><canvas id="expenseTrend"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">New registrations per month</div>
+    <div class="card-body"><div class="chart-box"><canvas id="signups"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Users logging in per day (last 14 days)</div>
+    <div class="card-body"><div class="chart-box"><canvas id="logins"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Expense records by category</div>
+    <div class="card-body"><div class="chart-box"><canvas id="categoryMix"></canvas></div></div></div></div>
+</div>
+
+<div class="card"><div class="card-header bg-white fw-semibold d-flex justify-content-between">Recent system activity
+  <span class="small text-muted fw-normal">Counts only – no private financial data</span></div>
+  <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+    <thead class="table-light"><tr><th>When (UTC)</th><th>Event</th><th>User</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for a in activity %}
+      <tr><td class="text-nowrap small">{{ a.created_at.strftime('%d %b %Y %H:%M') }}</td>
+          <td><span class="badge text-bg-light border">{{ a.action|replace('_', ' ') }}</span></td>
+          <td>{% if a.actor %}<a href="{{ url_for('admin.user_detail', user_id=a.actor.id) }}">{{ a.actor.name }}</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="small text-muted">{{ a.detail or '' }}</td></tr>
+    {% else %}<tr><td colspan="4" class="text-center text-muted py-4">No activity recorded yet.</td></tr>{% endfor %}
+    </tbody></table></div></div>
+<script id="chart-data" type="application/json">{{ charts|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>{% endblock %}

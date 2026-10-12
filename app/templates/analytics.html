@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Analytics</h1>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Weekly spending (last 8 weeks)</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartWeekly"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Categories: this month vs last month</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartComparison"></canvas></div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Category change vs last month</div>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <thead class="table-light"><tr><th>Category</th><th class="text-end">This month</th><th class="text-end">Last month</th><th class="text-end">Change</th></tr></thead>
+      <tbody>{% for c in comparison %}
+        <tr><td><span class="badge" style="background:{{ c.category|cat_color }}">{{ c.category }}</span></td>
+          <td class="text-end">{{ c.current|money }}</td><td class="text-end">{{ c.previous|money }}</td>
+          <td class="text-end">{% if c.change_pct is none %}<span class="text-muted">{{ 'new' if c.current > 0 else '—' }}</span>
+            {% else %}<span class="{{ 'text-danger' if c.change_pct > 0 else 'text-success' }}">{{ '%+.0f'|format(c.change_pct) }}%</span>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="4" class="text-center text-muted py-4">No data for these months yet.</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Top stores / places (all time)</div>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <thead class="table-light"><tr><th>Store</th><th class="text-end">Visits</th><th class="text-end">Total</th></tr></thead>
+      <tbody>{% for s in stores %}<tr><td>{{ s.store }}</td><td class="text-end">{{ s.count }}</td><td class="text-end fw-semibold">{{ s.total|money }}</td></tr>
+      {% else %}<tr><td colspan="3" class="text-center text-muted py-4">No stores recorded yet.</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Daily spending (last 14 days)</div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <tbody>{% for d in daily|reverse %}<tr><td>{{ d.label }}</td><td class="text-end {{ 'text-muted' if d.total == 0 }}">{{ d.total|money }}</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Monthly spending (last 12 months)</div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <tbody>{% for m in monthly|reverse %}<tr><td>{{ m.label }}</td><td class="text-end {{ 'text-muted' if m.total == 0 }}">{{ m.total|money }}</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</div>
+
+<script type="application/json" id="analyticsData">{{ chart|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>{% endblock %}

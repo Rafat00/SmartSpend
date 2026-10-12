@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div>
+    <h1 class="h3 mb-0">Welcome back, {{ current_user.name.split()[0] }} 👋</h1>
+    <div class="text-muted">{{ today.strftime('%A, %d %B %Y') }}</div>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('expenses.add_expense') }}"><i class="bi bi-plus-lg me-1"></i>Add Expense</a>
+</div>
+
+{% if budget.exceeded %}
+  <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>⚠️ You have exceeded your monthly budget by {{ budget.over_by|money }}.</div>
+{% elif budget.has_budget and budget.percent >= 80 %}
+  <div class="alert alert-warning"><i class="bi bi-exclamation-circle me-2"></i>You have used {{ budget.percent }}% of this month's budget.</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label"><i class="bi bi-sun me-1"></i>Today's Spending</div><div class="stat-value">{{ cards.today|money }}</div></div></div></div>
+  <div class="col-6 col-xl"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label"><i class="bi bi-calendar-week me-1"></i>This Week</div><div class="stat-value">{{ cards.week|money }}</div></div></div></div>
+  <div class="col-6 col-xl"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label"><i class="bi bi-calendar-month me-1"></i>This Month</div><div class="stat-value">{{ cards.month|money }}</div></div></div></div>
+  <div class="col-6 col-xl"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label"><i class="bi bi-cash-stack me-1"></i>Total Expenses</div><div class="stat-value">{{ cards.total|money }}</div>
+    <div class="small text-muted">{{ cards.transactions }} transactions</div></div></div></div>
+  <div class="col-12 col-xl"><div class="card stat-card h-100 {{ 'border-danger' if budget.exceeded else '' }}"><div class="card-body">
+    <div class="stat-label"><i class="bi bi-piggy-bank me-1"></i>Remaining Budget</div>
+    {% if budget.has_budget %}
+      <div class="stat-value {{ 'text-danger' if budget.exceeded else 'text-success' }}">{{ budget.remaining|money }}</div>
+      <div class="progress mt-2" style="height:8px"><div class="progress-bar {{ 'bg-danger' if budget.exceeded else ('bg-warning' if budget.percent >= 80 else 'bg-success') }}" style="width: {{ [budget.percent, 100]|min }}%"></div></div>
+      <div class="small text-muted mt-1">{{ budget.spent|money }} of {{ budget.budget|money }} ({{ budget.percent }}%)</div>
+    {% else %}
+      <div class="stat-value text-muted">—</div>
+      <a class="small" href="{{ url_for('budget.manage') }}">Set a monthly budget</a>
+    {% endif %}
+  </div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Monthly spending trend</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartMonthly"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Expense by category <span class="text-muted fw-normal small" id="categoryScope"></span></div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartCategory"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Top stores / places</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartStores"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header bg-white fw-semibold">Daily spending (last 30 days)</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chartDaily"></canvas></div></div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Recent expenses</span>
+    <a href="{{ url_for('expenses.list_expenses') }}" class="small">View all</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Date</th><th>Expense</th><th>Category</th><th>Store</th><th class="text-end">Amount</th></tr></thead>
+      <tbody>
+      {% for e in recent %}
+        <tr><td>{{ e.date.strftime('%d %b') }}</td><td>{{ e.expense_name }}</td>
+          <td><span class="badge" style="background:{{ e.category|cat_color }}">{{ e.category }}</span></td>
+          <td>{{ e.store or '—' }}</td><td class="text-end fw-semibold">{{ e.amount|money }}</td></tr>
+      {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No expenses yet. <a href="{{ url_for('expenses.add_expense') }}">Add your first one</a>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.CHART_URL = "{{ url_for('main.chart_data') }}";</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
